@@ -1,0 +1,40 @@
+#!/bin/bash
+
+cd ~/development/src/library
+pwd
+cd FontDraw
+make clean
+make all
+cd ~/development/src/library
+cd Title
+make clean
+make all
+cd Setting
+make clean
+make all
+cd ~/development/src/library
+cd Title/Play
+make clean
+make all
+cd Clear
+make clean
+make all
+cd ~/development/src/library
+cd Title/Play
+cd Failure
+make clean
+make all
+cd ~/development/src/library
+cd Title/Play
+cd Game
+make clean
+make all
+cd ~/development/src/library
+cd Title/Play
+cd Pause
+make clean
+make all
+cd ~/development/src/program/bakuman
+make clean
+make all
+echo "FINISH!!"

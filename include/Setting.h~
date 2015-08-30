@@ -1,0 +1,33 @@
+#ifndef TITLE_H_
+#define TITLE_H_
+
+#include "Base.h"
+
+class Title : public Base
+{
+ public:
+  static Title *instance();
+  static void create();
+  static void destroy();
+  //update function for Base class
+  Base *update();
+
+  //keybord handler
+  void keybord_handler(unsigned char key);
+
+  //draw function
+  void draw();
+  enum TitleDisp { PLAY = 0,
+		       SETTING
+  };
+  
+  TitleDisp title_disp_;
+ private:
+  Title();
+  ~Title();
+  
+  static Title *title_;
+
+};
+
+#endif

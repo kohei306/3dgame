@@ -1,0 +1,19 @@
+#ifndef CLEAR_H_
+#define CLEAR_H_
+
+#include "Base.h"
+class Play;
+
+class Clear : public Base
+{
+ public:
+  //update function for Play class
+  Base *update(Play* play);
+
+  //keybord handler
+  void keybord_handler(unsigned char key);
+
+ 
+};
+
+#endif

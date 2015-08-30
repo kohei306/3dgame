@@ -1,0 +1,430 @@
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
+#include <GL/gl.h>
+#include <GL/glut.h>
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <assert.h>
+
+//#include "bmp.h"
+#include "Game.h"
+#include "Play.h"
+#include "Pause.h"
+#include "Clear.h"
+#include "Failure.h"
+
+using namespace std;
+
+//update function for Play class
+Base *Game::update(Play* play) {
+  Base *temp_base = this;
+  if (seq_trig_ == STARTKEY)
+    temp_base = new Pause;
+  else if (seq_trig_ == CLEAR)
+    temp_base = new Clear;
+  else if(seq_trig_ == FAILURE)
+    temp_base = new Failure;
+  else if (seq_trig_ == EXIT)
+    exit(0);
+  else temp_base = this;
+  return temp_base;
+}
+
+//keybord handler
+void Game::keybord_handler(unsigned char key) {
+  
+  int player1_x, player1_y, player2_x, player2_y;
+  get_player_position(PLAYER1, player1_x, player1_y);
+  get_player_position(PLAYER2, player2_x, player2_y);
+
+  switch(key) {
+  case 't':
+    seq_trig_ = Base::STARTKEY;
+    break;
+  case 'q': 
+  case 'Q':
+  case '\033':  // '\033' は ESC の ASCII コード 
+    seq_trig_ = Base::EXIT;
+    break;    
+ case 'a':
+   if (get_state(player1_x - 1, player1_y) == FLOOR) {
+      set_state(PLAYER1, player1_x - 1, player1_y);
+      set_state(FLOOR, player1_x, player1_y);
+    } 
+    break;
+  case 'd':
+    if (get_state(player1_x + 1, player1_y) == FLOOR) {
+      set_state(PLAYER1, player1_x + 1, player1_y);
+      set_state(FLOOR, player1_x, player1_y);
+    }
+    break;
+  case 'w':
+    if (get_state(player1_x, player1_y + 1) == FLOOR) {
+      set_state(PLAYER1, player1_x, player1_y + 1);
+      set_state(FLOOR, player1_x, player1_y);
+    } 
+    break;
+  case 'x':
+    if (get_state(player1_x, player1_y - 1) == FLOOR) {
+      set_state(PLAYER1, player1_x, player1_y - 1);
+      set_state(FLOOR, player1_x, player1_y);
+    }
+    break;
+  case 's':
+      set_state(BOMB, player1_x, player1_y);
+      set_state(PLAYER1, player1_x + 1, player1_y);
+  break;
+  case 'j':
+   if (get_state(player2_x - 1, player2_y) == FLOOR) {
+      set_state(PLAYER2, player2_x - 1, player2_y);
+      set_state(FLOOR, player2_x, player2_y);
+    } 
+    break;
+  case 'l':
+    if (get_state(player2_x + 1, player2_y) == FLOOR) {
+      set_state(PLAYER2, player2_x + 1, player2_y);
+      set_state(FLOOR, player2_x, player2_y);
+    }
+    break;
+  case 'i':
+    if (get_state(player2_x, player2_y + 1) == FLOOR) {
+      set_state(PLAYER2, player2_x, player2_y + 1);
+      set_state(FLOOR, player2_x, player2_y);
+    } 
+    break;
+  case 'm':
+    if (get_state(player2_x, player2_y - 1) == FLOOR) {
+      set_state(PLAYER2, player2_x, player2_y - 1);
+      set_state(FLOOR, player2_x, player2_y);
+    }
+    break;
+  case 'k':
+      set_state(BOMB, player2_x, player2_y);
+      set_state(PLAYER2, player2_x + 1, player2_y);
+      break;
+  default:
+    break;
+  }
+}
+
+//draw function
+void Game::draw() {
+  set_texture_id(object::tx_id);
+  draw_all_objects();
+}
+
+void Game::set_texture_id(GLuint t_id) {
+  texture_id_ = t_id; 
+}
+
+GLuint Game::get_texture_id() { 
+  return texture_id_;
+}
+
+void Game::draw_object() {
+  // glClear(GL_COLOR_BUFFER_BIT);
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,GL_REPLACE);
+  glBindTexture(GL_TEXTURE_2D, get_texture_id());
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(0, 105, 0, 105);
+  
+
+  double x;
+  double y;
+  double size = 0.25;
+  switch (get_image_id()) {
+  case PLAYER1: { 
+    x = 0;
+    y = 0.75;
+    break;
+  }
+  case PLAYER2:
+    x = 0.25;
+    y = 0.75;
+    break;
+  case BOMB_UP:
+    x = 0.50;
+    y = 0.75;
+    break;
+  case FIRE_UP:
+    x = 0.75;
+    y = 0.75;
+    break;
+  case HORI_FIRE:
+    x = 0;
+    y = 0.50;
+    break;
+  case VER_FIRE:
+    x = 0.25;
+    y = 0.50;
+    break;
+  case ENEMY:
+    x = 0.50;
+    y = 0.50;
+    break;
+  case WALL:
+    x = 0.75;
+    y = 0.50;
+    break;
+  case BRICK:
+    x = 0;
+    y = 0.25;
+    break;
+  case FLOOR:
+    x = 0.25;
+    y = 0.25;
+    break;
+  case BOMB:
+    x = 0.50;
+    y = 0.25;
+    break;
+  case CROSS_FIRE:
+    x = 0.75;
+    y = 0.25;
+    break;
+  default:
+    fprintf(stderr, "there is no such a object\n");
+    break;
+  }
+  glBegin(GL_QUADS);
+  glTexCoord2f(x, y); glVertex2i(get_vertex_x(), get_vertex_y());
+  glTexCoord2f(x, y + size); glVertex2i(get_vertex_x(), get_vertex_y() + get_size());
+  glTexCoord2f(x + size, y + size); glVertex2i(get_vertex_x() + get_size(), get_vertex_y() + get_size());
+  glTexCoord2f(x + size, y); glVertex2i(get_vertex_x() + get_size(), get_vertex_y());
+  glEnd();
+ 
+  glDisable(GL_TEXTURE_2D);
+  glFlush();
+}
+
+void Game::draw_all_objects() {
+  for (int i = 0; i < stage_size_; i++) {
+    switch (states_[i]) {
+    case Game::WALL:
+      set_object(Game::WALL, (i%21)*5, (i/21)*5); 
+      draw_object();    
+      break;
+    case Game::FLOOR:
+      set_object(Game::FLOOR, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::PLAYER1:
+      set_object(Game::PLAYER1, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::PLAYER2:
+      set_object(Game::PLAYER2, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::BRICK:
+    case Game::BRICK_FIRE_UP:
+    case Game::BRICK_BOMB_UP:
+      set_object(Game::BRICK, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::ENEMY:
+      set_object(Game::ENEMY, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::FIRE_UP:
+      set_object(Game::FIRE_UP, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::BOMB_UP:
+      set_object(Game::BOMB_UP, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+    case Game::BOMB:
+      set_object(Game::BOMB, (i%21)*5, (i/21)*5);
+      draw_object();
+      break;
+
+    }
+  }
+}
+
+void Game::set_image_id(ImageID img_id) {
+  image_id_ = img_id;
+}
+
+Game::ImageID Game::get_image_id() { 
+  return image_id_;
+}
+
+void Game::set_vertex_x(int x) {
+  vertex_x_ = x;
+}
+
+void Game::set_vertex_y(int y) {
+  vertex_y_ = y;
+}
+
+int Game::get_vertex_x() {
+  return vertex_x_;
+}
+
+int Game::get_vertex_y() {
+  return vertex_y_;
+}
+
+void Game::set_size(int size) {
+  size_ = size;
+}
+
+int Game::get_size() {
+  return size_;
+}
+
+void Game::init_object(GLuint t_id, ImageID img_id, int x, int y, int size) {
+  texture_id_ = t_id; 
+  image_id_ = img_id;
+  vertex_x_ = x;
+  vertex_y_ = y;
+  size_ = size;
+}
+
+void Game::set_object(ImageID img_id, int x, int y) {
+  image_id_ = img_id;
+  vertex_x_ = x;
+  vertex_y_ = y;
+}
+
+
+ //stage data handle function
+void Game::load_stage(char *filename) {
+
+  ifstream inputFile(filename, ifstream::binary);
+  inputFile.seekg(0, ifstream::end);
+
+  int file_size = static_cast<int>(inputFile.tellg());
+  inputFile.seekg(0, ifstream::beg);
+
+  char* file_image = new char[file_size];
+  inputFile.read(file_image, file_size);
+  cout.write(file_image, file_size);
+   
+  int i = 0;
+  int stage_size = 0;
+     while(file_image[i] != '\0') {
+       switch (file_image[i]) {
+       case '#' :
+	 states_.push_back(WALL);
+	 stage_size++;
+	 break;
+       case ' ':
+	 states_.push_back(FLOOR);
+	 floor_points_.push_back(stage_size);
+	 stage_size++;
+	 break;
+       }
+       i++;
+     }
+     stage_size_ =  stage_size;
+}
+
+void Game::set_state(ImageID img_id, int x, int y) {
+  states_[x + y*21] = img_id;
+}
+
+Game::ImageID Game::get_state(int x, int y) {
+  return states_[x + y*21];
+}
+
+void Game::get_player_position(Game::ImageID img_id, int& x, int&y) {
+  int player_idx = 0;
+  vector<Game::ImageID>::iterator it;
+  if (img_id == Game::PLAYER1) { 
+    it = find(states_.begin(), states_.end(), PLAYER1);
+    player_idx = distance(states_.begin(), it);
+  }
+  else if (img_id == Game::PLAYER2) { 
+    it = find(states_.begin(), states_.end(), PLAYER2);
+    player_idx = distance(states_.begin(), it);
+  }
+  else {
+    fprintf(stderr, "arg 1 is not PLAYER!!#\n");
+    exit(0); 
+  }
+  x = player_idx % 21;
+  y = player_idx / 21;
+};
+
+void Game::init_states(  double enemy_percent,
+				double brick_percent,
+				double fire_up_percent,
+				double bomb_up_percent,
+				int num_players) {
+
+  assert((enemy_percent + brick_percent) < 1 && 
+	 "enemy_percent + brick_percent should be < 1!!");
+
+  int num_enemies = enemy_percent * floor_points_.size();
+  int num_bricks = brick_percent * floor_points_.size();
+
+  for(int i = 0; i < num_enemies; i++) {
+    int idx = rand() % (floor_points_.size() - 1);
+    states_[floor_points_[idx]] = ENEMY;
+    floor_points_.erase(floor_points_.begin() + idx);
+  }
+
+  for(int i = 0; i < num_bricks; i++) {
+    int idx = rand() % (floor_points_.size() - 1);
+    states_[floor_points_[idx]] = BRICK;
+    brick_points_.push_back(floor_points_[idx]);
+    floor_points_.erase(floor_points_.begin() + idx);
+ }
+  int num_fire_up = fire_up_percent * brick_points_.size();
+  int num_bomb_up = bomb_up_percent * brick_points_.size();
+
+  for(int i = 0; i < num_fire_up; i++) {
+    int idx = rand() % (brick_points_.size() - 1);
+      states_[brick_points_[idx]] = BRICK_FIRE_UP;
+      brick_points_.erase(brick_points_.begin() + idx);
+  }
+
+ for(int i = 0; i < num_bomb_up; i++) {
+    int idx = rand() % (brick_points_.size() - 1);
+    states_[brick_points_[idx]] = BRICK_BOMB_UP;
+    brick_points_.erase(brick_points_.begin() + idx);
+  }
+
+ for (int i = 0; i < num_players; i++) {
+   if (i == 0) {
+     set_state(PLAYER1, 1, 19);
+     set_state(FLOOR, 2, 19);
+     set_state(FLOOR, 1, 18);
+   }
+   else if (i == 1){
+     set_state(PLAYER2, 19, 1);
+     set_state(FLOOR, 19, 2);
+     set_state(FLOOR, 18, 1);
+   }
+ }
+}
+
+Game *Game::instance() {
+  return Game::game_;
+}
+
+void Game::create() {
+  assert(!game_ && "object Game exists already!!\n");
+  game_ = new Game();
+}
+
+void Game::destroy() {
+  delete game_;
+  game_ = NULL;
+}
+
+Game::Game(){
+  load_stage("../data/stage/stage1.txt");
+  set_size(5);
+  init_states(0.07, 0.6, 0.1, 0.1, 2);
+  seq_trig_ = NONE;
+}
+Game::~Game(){}

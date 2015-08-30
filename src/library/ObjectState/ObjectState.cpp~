@@ -1,0 +1,53 @@
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
+//#include <GL/gl.h>
+//#include <GL/glut.h>
+#include <stdio.h>
+#include <string.h>
+
+//#include "bmp.h"
+#include "ObjectState.h"
+using namespace std;
+void ObjectState::load_stage(char *filename) {
+
+  ifstream inputFile(filename, ifstream::binary);
+  inputFile.seekg(0, ifstream::end);
+
+  int file_size = static_cast<int>(inputFile.tellg());
+  inputFile.seekg(0, ifstream::beg);
+
+  char* file_image = new char[file_size];
+  inputFile.read(file_image, file_size);
+  cout.write(file_image, file_size);
+   
+  int i = 0;
+  int stage_size = 0;
+    ImageID *states = new ImageID[strlen(file_image)];
+     while(file_image[i] != '\0') {
+       switch (file_image[i]) {
+       case '#' :
+	 states[stage_size] = WALL;
+	 stage_size++;
+	 break;
+       case ' ':
+	 states[stage_size] = FLOOR;
+	 stage_size++;
+	 break;
+       }
+       i++;
+     }
+     stage_size_ =  stage_size;
+     states_ = states;
+}
+
+void ObjectState::set_state(ImageID img_id, int x, int y) {
+  states_[x + y*20] = img_id;
+}
+
+ObjectState::ImageID ObjectState::get_state(int x, int y) {
+  return states_[x + y*20];
+}
+
+
+
